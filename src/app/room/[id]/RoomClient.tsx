@@ -292,58 +292,61 @@ export default function RoomClient({ room, currentUser, questions }: RoomClientP
       </AnimatePresence>
 
       {/* HEADER BAR: POINTS & RELATIONSHIP RANK */}
-      <div className="w-full bg-slate-900/80 backdrop-blur-xl border border-slate-800 p-4 sm:p-5 rounded-3xl mb-6 shadow-2xl flex flex-wrap items-center justify-between gap-4">
-        
-        <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/80 border ${userRank.border} text-xs font-black shadow`}>
-            <Crown className="w-4 h-4 text-amber-400" />
-            <span className={userRank.color}>{userRank.title}</span>
-          </div>
+      <div className="w-full bg-slate-900/80 backdrop-blur-xl border border-slate-800 p-4 rounded-3xl mb-4 shadow-xl flex flex-wrap items-center justify-between gap-3">
+        <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/80 border ${userRank.border} text-xs font-black shadow`}>
+          <Crown className="w-4 h-4 text-amber-400" />
+          <span className={userRank.color}>{userRank.title}</span>
+        </div>
 
-          <div className="text-xs text-slate-300 font-bold flex items-center gap-2">
-            <span className="bg-pink-500/20 border border-pink-500/30 px-3 py-1 rounded-full text-pink-300">
-              {currentUser.name}: {currentUser.points || 0} 💕
+        <div className="text-xs text-slate-300 font-bold flex items-center gap-2">
+          <span className="bg-pink-500/20 border border-pink-500/30 px-3 py-1 rounded-full text-pink-300">
+            {currentUser.name}: {currentUser.points || 0} 💕
+          </span>
+          {otherUser && (
+            <span className="bg-purple-500/20 border border-purple-500/30 px-3 py-1 rounded-full text-purple-300">
+              {otherUser.name}: {otherUser.points || 0} 💕
             </span>
-            {otherUser && (
-              <span className="bg-purple-500/20 border border-purple-500/30 px-3 py-1 rounded-full text-purple-300">
-                {otherUser.name}: {otherUser.points || 0} 💕
-              </span>
-            )}
-          </div>
+          )}
         </div>
+      </div>
 
-        {/* GAME TYPE HUB TABS */}
-        <div className="flex items-center gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
-          <button
-            onClick={() => handleCategorySwitch(room.gameMode || 'ROMANTIC')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-              isQuizMode ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" /> Couples Quiz
-          </button>
+      {/* 🎮 PROMINENT MOBILE-FRIENDLY GAME SELECTOR (QUIZ vs TRUTH OR DARE) */}
+      <div className="w-full grid grid-cols-2 gap-3 mb-6">
+        <button
+          onClick={() => handleCategorySwitch(room.gameMode || 'ROMANTIC')}
+          className={`p-4 rounded-2xl border text-sm font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-2 shadow-lg ${
+            isQuizMode 
+              ? 'bg-gradient-to-r from-pink-500 to-purple-600 border-pink-400 text-white shadow-pink-500/25 scale-[1.02]' 
+              : 'bg-slate-900/80 hover:bg-slate-800 border-slate-800 text-slate-400'
+          }`}
+        >
+          <Sparkles className="w-5 h-5 text-pink-300" />
+          <span>Couples Quiz</span>
+        </button>
 
-          <button
-            onClick={handleStartTruthOrDare}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-              !isQuizMode ? 'bg-gradient-to-r from-amber-500 to-rose-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5 text-amber-300" /> Truth or Dare 🔥
-          </button>
-        </div>
+        <button
+          onClick={handleStartTruthOrDare}
+          className={`p-4 rounded-2xl border text-sm font-black transition-all flex flex-col sm:flex-row items-center justify-center gap-2 shadow-lg ${
+            !isQuizMode 
+              ? 'bg-gradient-to-r from-amber-500 to-rose-600 border-amber-400 text-white shadow-amber-500/25 scale-[1.02]' 
+              : 'bg-slate-900/80 hover:bg-slate-800 border-slate-800 text-slate-400'
+          }`}
+        >
+          <Flame className="w-5 h-5 text-amber-300" />
+          <span>Truth or Dare 🔥</span>
+        </button>
       </div>
 
       {/* QUIZ CATEGORY SELECTOR (WHEN IN QUIZ MODE) */}
       {isQuizMode && (
         <div className="w-full mb-6">
           <div className="flex items-center justify-between mb-3 px-1">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Select Quiz Category</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quiz Categories</span>
             <button
               onClick={() => handleCategorySwitch(room.gameMode)}
               className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 font-bold bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/20"
             >
-              <Dices className="w-3.5 h-3.5" /> Shuffle New 5 Questions
+              <Dices className="w-3.5 h-3.5" /> Shuffle New 5
             </button>
           </div>
 
@@ -355,7 +358,7 @@ export default function RoomClient({ room, currentUser, questions }: RoomClientP
                 <button
                   key={cat.id}
                   onClick={() => handleCategorySwitch(cat.id)}
-                  className={`p-3 rounded-2xl border text-xs font-bold transition-all flex items-center gap-2 ${
+                  className={`p-3.5 rounded-2xl border text-xs font-bold transition-all flex items-center gap-2 ${
                     isActive 
                       ? `bg-gradient-to-r ${cat.color} border-white/40 text-white shadow-lg scale-[1.02]`
                       : 'bg-slate-900/60 hover:bg-slate-800 border-slate-800 text-slate-300'
