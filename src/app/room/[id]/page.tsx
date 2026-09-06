@@ -74,10 +74,18 @@ export default async function RoomPage({ params }: { params: { id: string } }) {
     )
   }
 
-  const questions = await prisma.question.findMany({ 
-    where: { category: room.gameMode || 'ROMANTIC' },
-    orderBy: { order: 'asc' } 
-  })
+  let activeQIds: string[] = []
+  try {
+    if (room.activeQuestionIds) {
+      activeQIds = JSON.parse(room.activeQuestionIds)
+    }
+  } catch {
+    activeQIds = []
+  }
+
+  const questions = activeQIds.length > 0
+    ? await prisma.question.findMany({ where: { id: { in: activeQIds } } })
+    : await prisma.question.findMany({ where: { category: room.gameMode || 'ROMANTIC' }, take: 5 })
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden text-white">

@@ -11,10 +11,13 @@ datasource db {
 }
 
 model Room {
-  id        String   @id @default(cuid())
-  gameMode  String   @default("ROMANTIC")
-  createdAt DateTime @default(now())
-  users     User[]
+  id                String   @id @default(cuid())
+  activeGame        String   @default("QUIZ")     // "QUIZ" | "TRUTH_OR_DARE"
+  gameMode          String   @default("ROMANTIC") // Category for Quiz
+  activeQuestionIds String?  // JSON string array of current 5 question IDs
+  todState          String?  // JSON string state for active Truth or Dare turn
+  createdAt         DateTime @default(now())
+  users             User[]
 }
 
 model User {
@@ -38,6 +41,13 @@ model Question {
   answers  Answer[]
 }
 
+model TruthOrDareCard {
+  id       String @id @default(cuid())
+  type     String // "TRUTH" | "DARE"
+  category String @default("FUN") // "ROMANTIC" | "FUN" | "SPICY"
+  text     String
+}
+
 model Answer {
   id         String   @id @default(cuid())
   userId     String
@@ -54,7 +64,7 @@ model Action {
   id         String   @id @default(cuid())
   senderId   String
   receiverId String
-  type       String   // 'FLOWER', 'HUG', 'NOTE'
+  type       String   // 'FLOWER', 'HUG', 'NOTE', 'CHOCOLATE', 'KISS', 'COFFEE'
   content    String?
   createdAt  DateTime @default(now())
   sender     User     @relation("ActionSender", fields: [senderId], references: [id], onDelete: Cascade)
