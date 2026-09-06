@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  gameMode  String   @default("ROMANTIC")
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model User {
+  id              String   @id @default(cuid())
+  roomId          String
+  name            String
+  points          Int      @default(0)
+  joinedAt        DateTime @default(now())
+  room            Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  answers         Answer[]
+  actionsSent     Action[] @relation("ActionSender")
+  actionsReceived Action[] @relation("ActionReceiver")
+}
+
+model Question {
+  id       String   @id @default(cuid())
+  text     String
+  category String   @default("ROMANTIC")
+  options  String   // JSON stringified array of options
+  order    Int
+  answers  Answer[]
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId String
+  answerText String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+}
+
+model Action {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  type       String   // 'FLOWER', 'HUG', 'NOTE'
+  content    String?
+  createdAt  DateTime @default(now())
+  sender     User     @relation("ActionSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("ActionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+}

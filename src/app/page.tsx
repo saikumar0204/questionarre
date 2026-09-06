@@ -1,69 +1,92 @@
-import Image from "next/image";
+import { createRoom } from './actions'
+import { Heart, Sparkles, Flame, Compass, HelpCircle } from 'lucide-react'
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 sm:p-12 relative overflow-hidden">
+      
+      {/* Decorative background elements */}
+      <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-pink-500/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: '1s' }}></div>
+
+      <div className="max-w-lg w-full bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl flex flex-col items-center text-center">
+        
+        <div className="bg-gradient-to-tr from-pink-500 to-rose-400 p-4 rounded-full mb-6 shadow-lg shadow-pink-500/30">
+          <Heart className="w-10 h-10 text-white fill-white animate-bounce" style={{ animationDuration: '2s' }} />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+
+        <h1 className="text-4xl font-extrabold tracking-tight mb-2 bg-gradient-to-r from-pink-400 via-purple-300 to-rose-400 bg-clip-text text-transparent">
+          SoulSync
+        </h1>
+        <p className="text-slate-300 mb-8 text-sm sm:text-base">
+          A private couple's space to answer quizzes, reveal soulmate compatibility, and send affection points!
+        </p>
+
+        <form action={createRoom} className="w-full space-y-6">
+          <div className="space-y-2 text-left">
+            <label htmlFor="name" className="text-sm font-semibold text-slate-300 ml-1">Your Name</label>
+            <input 
+              type="text" 
+              name="name" 
+              id="name"
+              required
+              className="w-full px-5 py-4 bg-slate-900/60 border border-slate-700/60 rounded-2xl focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all text-white placeholder-slate-500"
+              placeholder="Enter your name..."
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </div>
+
+          <div className="space-y-3 text-left">
+            <label className="text-sm font-semibold text-slate-300 ml-1">Select First Game Mode</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              
+              <label className="relative flex items-center p-3 rounded-2xl border border-slate-700/60 bg-slate-900/40 hover:bg-slate-800/60 cursor-pointer transition-all has-[:checked]:border-pink-500 has-[:checked]:bg-pink-500/10">
+                <input type="radio" name="gameMode" value="ROMANTIC" defaultChecked className="sr-only" />
+                <Sparkles className="w-5 h-5 text-pink-400 mr-2 flex-shrink-0" />
+                <div>
+                  <div className="text-xs font-bold text-white">💕 Romantic Soulmates</div>
+                  <div className="text-[10px] text-slate-400">Deep love & connection</div>
+                </div>
+              </label>
+
+              <label className="relative flex items-center p-3 rounded-2xl border border-slate-700/60 bg-slate-900/40 hover:bg-slate-800/60 cursor-pointer transition-all has-[:checked]:border-pink-500 has-[:checked]:bg-pink-500/10">
+                <input type="radio" name="gameMode" value="SPICY_FUN" className="sr-only" />
+                <Flame className="w-5 h-5 text-amber-400 mr-2 flex-shrink-0" />
+                <div>
+                  <div className="text-xs font-bold text-white">😂 Funny & Playful</div>
+                  <div className="text-[10px] text-slate-400">Hilarious couple habits</div>
+                </div>
+              </label>
+
+              <label className="relative flex items-center p-3 rounded-2xl border border-slate-700/60 bg-slate-900/40 hover:bg-slate-800/60 cursor-pointer transition-all has-[:checked]:border-pink-500 has-[:checked]:bg-pink-500/10">
+                <input type="radio" name="gameMode" value="FUTURE" className="sr-only" />
+                <Compass className="w-5 h-5 text-cyan-400 mr-2 flex-shrink-0" />
+                <div>
+                  <div className="text-xs font-bold text-white">✈️ Future & Dreams</div>
+                  <div className="text-[10px] text-slate-400">Travel, pets & life goals</div>
+                </div>
+              </label>
+
+              <label className="relative flex items-center p-3 rounded-2xl border border-slate-700/60 bg-slate-900/40 hover:bg-slate-800/60 cursor-pointer transition-all has-[:checked]:border-pink-500 has-[:checked]:bg-pink-500/10">
+                <input type="radio" name="gameMode" value="WOULD_YOU_RATHER" className="sr-only" />
+                <HelpCircle className="w-5 h-5 text-purple-400 mr-2 flex-shrink-0" />
+                <div>
+                  <div className="text-xs font-bold text-white">🤔 Would You Rather</div>
+                  <div className="text-[10px] text-slate-400">Fun couple dilemmas</div>
+                </div>
+              </label>
+
+            </div>
+          </div>
+          
+          <button 
+            type="submit"
+            className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white rounded-2xl font-bold shadow-lg shadow-pink-500/25 transition-all active:scale-[0.98] text-base"
           >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+            Create Private Room
+          </button>
+        </form>
+
+      </div>
+    </main>
+  )
 }
