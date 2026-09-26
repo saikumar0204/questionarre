@@ -2,9 +2,14 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSessionUserId } from '@/lib/session'
 import { snapshotFor } from '@/lib/room'
+import { guard } from '@/lib/http'
 
 /** Cheap polling endpoint: when nothing changed it only reads one integer. */
-export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
+export function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  return guard(() => handle(req, ctx))
+}
+
+async function handle(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
   const userId = await getSessionUserId(id)
   if (!userId) return NextResponse.json({ error: 'Not signed in to this room.' }, { status: 401, headers: { 'cache-control': 'no-store' } })

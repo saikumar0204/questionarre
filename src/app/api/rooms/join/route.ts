@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server'
 import { joinRoom } from '@/lib/room'
 import { getSessionUserId, setSession } from '@/lib/session'
+import { guard } from '@/lib/http'
 
-export async function POST(req: Request) {
+export function POST(req: Request) {
+  return guard(() => handle(req))
+}
+
+async function handle(req: Request) {
   const body = await req.json().catch(() => null)
   if (!body || typeof body !== 'object') return NextResponse.json({ error: 'Bad request.' }, { status: 400 })
 

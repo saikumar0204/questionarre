@@ -24,7 +24,13 @@ function Message({ emoji, title, body }: { emoji: string; title: string; body: s
 
 export default async function RoomPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const room = await loadRoom(id).catch(() => null)
+  let room: Awaited<ReturnType<typeof loadRoom>>
+  try {
+    room = await loadRoom(id)
+  } catch (e) {
+    console.error('[room page] database error', e)
+    return <Message emoji="🔌" title="We can’t reach the server for a moment" body="Nothing is lost — your room is safe. Please wait a few seconds and reload this page." />
+  }
   if (!room) return <Message emoji="🔍" title="We couldn’t find that room" body="The link may be wrong, or the room was removed after a long time of no activity. You can create a new one in seconds." />
 
   const userId = await getSessionUserId(id)
