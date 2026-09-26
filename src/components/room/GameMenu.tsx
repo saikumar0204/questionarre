@@ -6,11 +6,10 @@ import { useRoom } from './store'
 import { cn, Sheet } from '@/components/ui'
 
 const GROUP_BLURB: Record<string, string> = {
-  Sync: 'Win together by thinking alike',
-  'Get to know': 'Discover new things about each other',
-  Party: 'Laughs, dares and confessions',
-  Deep: 'Slow down and really connect',
-  Board: 'Friendly competition',
+  'Play & compete': 'Draw, hunt, race and outsmart each other',
+  'Think alike': 'Win together by thinking alike',
+  'Party time': 'Laughs, dares and confessions',
+  'Get closer': 'Discover, share and connect',
 }
 
 function GameCard({ g, onPick, featured }: { g: GameDef; onPick: (g: GameDef) => void; featured?: boolean }) {
@@ -32,7 +31,7 @@ function GameCard({ g, onPick, featured }: { g: GameDef; onPick: (g: GameDef) =>
 }
 
 export function GameMenu() {
-  const { act, busy } = useRoom()
+  const { act, busy, snap } = useRoom()
   const [picking, setPicking] = useState<GameDef | null>(null)
   const [choice, setChoice] = useState<string>('')
   const [adult, setAdult] = useState(false)
@@ -63,7 +62,8 @@ export function GameMenu() {
       </section>
 
       {GROUP_ORDER.map((group) => {
-        const list = GAMES.filter((g) => g.group === group)
+        // most-played first within a section; ties keep the hand-picked order
+        const list = GAMES.filter((g) => g.group === group).sort((a, b) => (snap.plays[b.id] ?? 0) - (snap.plays[a.id] ?? 0))
         if (!list.length) return null
         return (
           <section key={group}>

@@ -123,6 +123,13 @@ model Spark {
   @@map("ss_spark")
 }
 
+model GamePlay {
+  game  String @id
+  count Int    @default(0)
+
+  @@map("ss_game_play")
+}
+
 // ------------------------------ LEGACY (previous app version, unused) ------------------------------
 
 model LegacyRoom {

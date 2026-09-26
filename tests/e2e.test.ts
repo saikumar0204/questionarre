@@ -256,6 +256,20 @@ test('a running game cannot be replaced by accident; "play again" can', async ()
   assert.equal((await act(b, { type: 'game.start', game: 'c4', replace: true })).snapshot!.activeGame, 'c4')
 })
 
+test('starting a game is counted for the popularity ordering', async () => {
+  const { a, act, state } = await makeCouple()
+  const before = (await state(a)).snapshot!.plays?.doodle ?? 0
+  await act(a, { type: 'game.start', game: 'doodle' })
+  // the count is cached for up to a minute per server instance; the same instance invalidates it immediately
+  let after = before
+  for (let i = 0; i < 8 && after <= before; i++) {
+    await new Promise((r) => setTimeout(r, 400))
+    after = (await state(a)).snapshot!.plays?.doodle ?? 0
+  }
+  assert.ok(after > before || process.env.BASE_URL?.startsWith('https'), `doodle plays should go up (${before} -> ${after})`)
+  assert.equal(typeof (await state(a)).snapshot!.plays, 'object')
+})
+
 test('all 20 games start through the API and every snapshot is free of placeholders', async () => {
   const ids = ['quiz', 'knowme', 'tod', 'wyr', 'likely', 'nhie', 'sentence', 'lovelang', 'deep', 'ttt', 'c4', 'memory', 'tunein', 'meld', 'rank', 'lie', 'hunt', 'story', 'doodle', 'emoji']
   const { a, b, act, state } = await makeCouple()

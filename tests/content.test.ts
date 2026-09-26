@@ -7,7 +7,7 @@ import { LOVELANG_QUESTIONS } from '../src/games/content/lovelang.ts'
 import { DECKS } from '../src/games/content/deep.ts'
 import { TOD_CARDS } from '../src/games/content/tod.ts'
 import { DATE_IDEAS, COUPON_TEMPLATES, BADGES, GIFT_TYPES } from '../src/games/content/extras.ts'
-import { GAMES } from '../src/games/registry.ts'
+import { GAMES, GROUP_ORDER } from '../src/games/registry.ts'
 
 const banks = { QUIZ, KNOWME, WYR, LIKELY, NHIE, SENTENCE }
 
@@ -103,4 +103,15 @@ test('deep talk decks, dates, coupons and badges are populated', () => {
 test('registry games are unique', () => {
   assert.equal(new Set(GAMES.map((g) => g.id)).size, GAMES.length)
   assert.ok(GAMES.length >= 12)
+})
+
+test('menu sections: every game is in a known section; the new layout leads with play & compete', () => {
+  assert.deepEqual([...GROUP_ORDER], ['Play & compete', 'Think alike', 'Party time', 'Get closer'])
+  for (const g of GAMES) assert.ok(GROUP_ORDER.includes(g.group), `${g.id} has unknown section ${g.group}`)
+  const by = (grp: string) => GAMES.filter((g) => g.group === grp).map((g) => g.id).sort()
+  assert.deepEqual(by('Play & compete'), ['c4', 'doodle', 'emoji', 'hunt', 'lie', 'memory', 'ttt'])
+  assert.deepEqual(by('Think alike'), ['meld', 'quiz', 'rank', 'tunein'])
+  assert.deepEqual(by('Party time'), ['likely', 'nhie', 'tod', 'wyr'])
+  assert.deepEqual(by('Get closer'), ['deep', 'knowme', 'lovelang', 'sentence', 'story'])
+  assert.deepEqual(GAMES.filter((g) => g.featured).map((g) => g.id).sort(), ['c4', 'doodle', 'hunt', 'tod', 'tunein'])
 })

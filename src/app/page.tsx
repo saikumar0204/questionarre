@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import StartForms from '@/components/StartForms'
 import { FloatingHearts } from '@/components/ui'
-import { GAMES } from '@/games/registry'
+import { GAMES as ALL_GAMES, GROUP_ORDER } from '@/games/registry'
+
+const GAMES = [...ALL_GAMES].sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group))
 import { SITE } from '@/config/site'
 
 const STEPS = [

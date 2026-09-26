@@ -40,6 +40,8 @@ export type Snapshot = {
   bucket: BucketInfo[]
   badges: BadgeInfo[]
   stats: Record<string, number>
+  /** how many times each game has been started across all rooms (used to order the menu) */
+  plays: Record<string, number>
 }
 
 const roomInclude = {
@@ -62,6 +64,20 @@ async function loadRoomLite(id: string): Promise<RoomFull | null> {
   return room ? ({ ...room, gifts: [], coupons: [], bucket: [], sparks: [] } as RoomFull) : null
 }
 
+let playsCache: { at: number; data: Record<string, number> } | null = null
+async function getPlays(): Promise<Record<string, number>> {
+  if (playsCache && Date.now() - playsCache.at < 60_000) return playsCache.data
+  try {
+    const rows = await prisma.gamePlay.findMany()
+    playsCache = { at: Date.now(), data: Object.fromEntries(rows.map((r) => [r.game, r.count])) }
+  } catch {
+    playsCache = { at: Date.now(), data: playsCache?.data ?? {} } // the menu order is cosmetic: never fail a request for it
+  }
+  return playsCache.data
+}
+const countPlay = (game: string) =>
+  prisma.gamePlay.upsert({ where: { game }, create: { game, count: 1 }, update: { count: { increment: 1 } } }).then(() => { playsCache = null }).catch(() => {})
+
 const NEEDS_CHILDREN = new Set(['spark.answer', 'coupon.redeem', 'bucket.add', 'bucket.toggle'])
 
 const parseJson = <T>(s: string | null | undefined, fallback: T): T => {
@@ -75,7 +91,7 @@ const parseJson = <T>(s: string | null | undefined, fallback: T): T => {
 const toPlayers = (room: RoomFull): Player[] => room.users.map((u) => ({ id: u.id, name: u.name }))
 const info = (u: RoomFull['users'][number]): PlayerInfo => ({ id: u.id, name: u.name, avatar: u.avatar, points: u.points })
 
-export function buildSnapshot(room: RoomFull, viewerId: string, now = new Date()): Snapshot | null {
+export function buildSnapshot(room: RoomFull, viewerId: string, now = new Date(), plays: Record<string, number> = {}): Snapshot | null {
   const meRow = room.users.find((u) => u.id === viewerId)
   if (!meRow) return null
   const partnerRow = room.users.find((u) => u.id !== viewerId) ?? null
@@ -147,12 +163,13 @@ export function buildSnapshot(room: RoomFull, viewerId: string, now = new Date()
       return { id: b.id, emoji: b.emoji, name: b.name, desc: b.desc, progress, goal: b.goal, unlocked: progress >= b.goal }
     }),
     stats,
+    plays,
   }
 }
 
 export async function snapshotFor(roomId: string, userId: string): Promise<Snapshot | null> {
-  const room = await loadRoom(roomId)
-  return room ? buildSnapshot(room, userId) : null
+  const [room, plays] = await Promise.all([loadRoom(roomId), getPlays()])
+  return room ? buildSnapshot(room, userId, new Date(), plays) : null
 }
 
 /* ------------------------------------------ rooms ------------------------------------------ */
@@ -255,6 +272,7 @@ export async function act(roomId: string, userId: string, body: ActBody): Promis
         const state = initGame(String(body.game), players, (body.options ?? {}) as StartOptions)
         if (!state) return fail('Unknown game.')
         outcome = await optimistic(room, { activeGame: String(body.game), gameState: JSON.stringify(state) })
+        if (typeof outcome === 'object' && !('error' in outcome)) void countPlay(String(body.game))
         break
       }
 
