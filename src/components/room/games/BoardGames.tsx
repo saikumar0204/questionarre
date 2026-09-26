@@ -46,6 +46,7 @@ function ResultBar({ winner, me, names, onRematch, busy }: { winner: Idx | 'draw
 /* ------------------------------- Tic-Tac-Toe ------------------------------- */
 export function TttGame({ view }: { view: BoardView<TttState> }) {
   const { send, busy } = useRoom()
+  const [pending, setPending] = useState<number | null>(null)
   const { ordered } = usePlayers()
   const celebrate = useCelebrate(view.winner === view.me ? `w${view.round}` : null)
   return (
@@ -56,8 +57,8 @@ export function TttGame({ view }: { view: BoardView<TttState> }) {
         {view.board.map((cell, i) => {
           const inLine = view.line?.includes(i)
           return (
-            <button key={i} aria-label={`Square ${i + 1}`} disabled={busy || cell !== null || !view.myTurn || view.winner !== null} onClick={() => send({ type: 'move', cell: i })} className={cn('glass grid place-items-center text-5xl transition active:scale-95 sm:text-6xl', cell === null && view.myTurn && view.winner === null && 'hover:bg-white/15', inLine && 'border-pink-300 bg-pink-500/25')}>
-              {cell !== null && <motion.span initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 320, damping: 14 }}>{ordered[cell].avatar}</motion.span>}
+            <button key={i} aria-label={`Square ${i + 1}`} disabled={busy || cell !== null || !view.myTurn || view.winner !== null} onClick={async () => { setPending(i); await send({ type: 'move', cell: i }); setPending(null) }} className={cn('glass grid place-items-center text-5xl transition active:scale-95 sm:text-6xl', cell === null && view.myTurn && view.winner === null && 'hover:bg-white/15', inLine && 'border-pink-300 bg-pink-500/25')}>
+              {(cell !== null || pending === i) && <motion.span initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} className={cell === null ? 'opacity-60' : ''} transition={{ type: 'spring', stiffness: 320, damping: 14 }}>{ordered[cell ?? view.me].avatar}</motion.span>}
             </button>
           )
         })}
@@ -140,7 +141,13 @@ export function HuntGame({ view }: { view: HuntView }) {
   const { send, busy } = useRoom()
   const { partner } = usePlayers()
   const [picked, setPicked] = useState<number[]>([])
+  const [pending, setPending] = useState<number | null>(null)
   const celebrate = useCelebrate(view.winner === view.me ? `w${view.round}` : null)
+  const shoot = async (i: number) => {
+    setPending(i) // show the tap instantly; the server confirms hit or miss a moment later
+    await send({ type: 'shoot', cell: i })
+    setPending(null)
+  }
   const cells = Array.from({ length: view.size * view.size }, (_, i) => i)
   const toggle = (i: number) => setPicked((p) => (p.includes(i) ? p.filter((x) => x !== i) : p.length < view.heartsToHide ? [...p, i] : p))
   const partnerName = partner.name
@@ -186,9 +193,9 @@ export function HuntGame({ view }: { view: HuntView }) {
             <Grid
               size={view.size}
               cells={cells}
-              onCell={view.myTurn && view.phase === 'play' ? (i) => send({ type: 'shoot', cell: i }) : undefined}
+              onCell={view.myTurn && view.phase === 'play' ? shoot : undefined}
               disabled={(i) => busy || view.theirBoard.hits.includes(i) || view.theirBoard.misses.includes(i)}
-              render={(i) => (view.theirBoard.hits.includes(i) ? '💗' : view.theirBoard.misses.includes(i) ? '·' : view.theirBoard.hearts?.includes(i) ? '💔' : '')}
+              render={(i) => (view.theirBoard.hits.includes(i) ? '💗' : view.theirBoard.misses.includes(i) ? '·' : view.theirBoard.hearts?.includes(i) ? '💔' : pending === i ? '🔍' : '')}
               active={(i) => view.theirBoard.hits.includes(i)}
             />
             <p className="mt-2 text-center text-[11px] text-white/45">A hit earns another shot!</p>

@@ -25,7 +25,11 @@ export function useRoom() {
   return c
 }
 
-const POLL_MS = 1800
+/** Poll fast while a game is being played (so moves show up almost instantly), slowly otherwise. */
+function pollDelay(s: Snapshot, sinceChange: number) {
+  if (s.activeGame && s.partner) return sinceChange < 60_000 ? 600 : 1500
+  return s.partner ? 2500 : 2000
+}
 
 export function RoomProvider({ initial, children }: { initial: Snapshot; children: React.ReactNode }) {
   const [snap, setSnap] = useState(initial)
@@ -33,13 +37,17 @@ export function RoomProvider({ initial, children }: { initial: Snapshot; childre
   const [toasts, setToasts] = useState<Toast[]>([])
   const [connection, setConnection] = useState<RoomCtx['connection']>('live')
   const vRef = useRef(initial.v)
+  const snapRef = useRef(initial)
+  const changedAt = useRef(0)
   const seq = useRef(0)
   const roomId = initial.roomId
 
   const apply = useCallback((next: Snapshot) => {
     // never let an older response (a slow poll) overwrite a newer one
     if (next.v >= vRef.current) {
+      if (next.v !== vRef.current) changedAt.current = Date.now()
       vRef.current = next.v
+      snapRef.current = next
       setSnap(next)
     }
   }, [])
@@ -77,6 +85,7 @@ export function RoomProvider({ initial, children }: { initial: Snapshot; childre
 
   // Polling: one tiny request every ~2s that only returns data when something changed.
   useEffect(() => {
+    changedAt.current = Date.now()
     let stopped = false
     let timer: ReturnType<typeof setTimeout>
     let failures = 0
@@ -99,9 +108,10 @@ export function RoomProvider({ initial, children }: { initial: Snapshot; childre
           if (failures >= 2) setConnection('reconnecting')
         }
       }
-      timer = setTimeout(tick, failures > 0 ? Math.min(8000, POLL_MS * (failures + 1)) : POLL_MS)
+      const base = pollDelay(snapRef.current, Date.now() - changedAt.current)
+      timer = setTimeout(tick, failures > 0 ? Math.min(8000, base * (failures + 1)) : base)
     }
-    timer = setTimeout(tick, POLL_MS)
+    timer = setTimeout(tick, 600)
 
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
