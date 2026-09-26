@@ -59,6 +59,13 @@ Set `PRISMA_STRICT=1` in Vercel once real customers use it, so any *destructive*
 
 Use a pooled connection string for `DATABASE_URL` on serverless (Vercel Postgres / Neon / Supabase pooler).
 
+## Performance for users in India
+
+Every response carries a `Server-Timing: db;dur=…` header (see the browser's Network tab). On production the database answers in ~9 ms, but the Vercel function runs in **Washington (`iad1`)**, so each request from India pays ~230 ms of network. To make the app feel instant:
+
+1. Create the Postgres database in **Mumbai** (e.g. Neon `ap-south-1`) and point `DATABASE_URL` at it.
+2. Add `"regions": ["bom1"]` to a `vercel.json` (only after step 1 — a Mumbai function talking to a US database would be slower).
+
 ## Rebranding
 
 Edit `src/config/site.ts` (name, tagline, domain, contact email) and the palette tokens in `src/app/globals.css`. Game copy lives in `src/games/content/`. Legal pages (`/privacy`, `/terms`) are plain-language templates — have a lawyer review them before selling commercially.
