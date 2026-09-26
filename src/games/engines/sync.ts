@@ -16,7 +16,7 @@ export type TuneState = {
   totalRounds: number
   psychic: 0 | 1
   spectrumIds: string[]
-  target: number // 0..100, only the psychic may see it until the reveal
+  target: number | null // 0..100, chosen by the psychic together with the clue; only they may see it until the reveal
   clue: string | null
   guess: number | null
   phase: 'clue' | 'guess' | 'reveal'
@@ -62,11 +62,11 @@ export const tuneEngine: Engine<TuneState, TuneView, { rand?: () => number }> = 
     const chosen = pick(SPECTRA, TUNE_ROUNDS, rand)
     return {
       engine: 'tunein', round: 1, totalRounds: TUNE_ROUNDS, psychic: 0, spectrumIds: chosen.map((s) => s.id),
-      target: 8 + Math.floor(rand() * 85), clue: null, guess: null, phase: 'clue', history: [], score: 0, finished: false,
+      target: null, clue: null, guess: null, phase: 'clue', history: [], score: 0, finished: false,
     }
   },
 
-  reduce(state, event: GameEvent, actor, players, rand = Math.random): Reduced<TuneState> {
+  reduce(state, event: GameEvent, actor, players): Reduced<TuneState> {
     const me = players.findIndex((p) => p.id === actor)
     if (me === -1) return { state, error: 'Not a player.' }
     if (state.finished) return { state, error: 'This game has finished.' }
@@ -76,7 +76,9 @@ export const tuneEngine: Engine<TuneState, TuneView, { rand?: () => number }> = 
       if (me !== state.psychic) return { state, error: `${players[state.psychic].name} gives the clue this round.` }
       const clue = String(event.text ?? '').trim().slice(0, 60)
       if (clue.length < 1) return { state, error: 'Give a clue first 💭' }
-      return { state: { ...state, clue, phase: 'guess' } }
+      const t = Number(event.target)
+      if (event.target === undefined || event.target === null || !Number.isFinite(t) || t < 0 || t > 100) return { state, error: 'Place the red target on the dial first 🎯' }
+      return { state: { ...state, clue, target: Math.round(t), phase: 'guess' } }
     }
 
     if (event.type === 'guess') {
@@ -85,8 +87,9 @@ export const tuneEngine: Engine<TuneState, TuneView, { rand?: () => number }> = 
       const g = Number(event.value)
       if (!Number.isFinite(g) || g < 0 || g > 100) return { state, error: 'Move the dial.' }
       const guess = Math.round(g)
-      const pts = tuneScore(state.target, guess)
-      const entry = { spectrum: state.spectrumIds[state.round - 1], clue: state.clue ?? '', target: state.target, guess, points: pts }
+      const target = state.target ?? 50
+      const pts = tuneScore(target, guess)
+      const entry = { spectrum: state.spectrumIds[state.round - 1], clue: state.clue ?? '', target, guess, points: pts }
       return {
         state: { ...state, guess, phase: 'reveal', score: state.score + pts, history: [...state.history, entry] },
         points: { [players[0].id]: pts * 5 + 3, [players[1].id]: pts * 5 + 3 },
@@ -101,7 +104,7 @@ export const tuneEngine: Engine<TuneState, TuneView, { rand?: () => number }> = 
       }
       return {
         state: {
-          ...state, round: state.round + 1, psychic: (1 - state.psychic) as 0 | 1, target: 8 + Math.floor(rand() * 85),
+          ...state, round: state.round + 1, psychic: (1 - state.psychic) as 0 | 1, target: null,
           clue: null, guess: null, phase: 'clue',
         },
       }
@@ -125,7 +128,7 @@ export const tuneEngine: Engine<TuneState, TuneView, { rand?: () => number }> = 
       role,
       psychicName: players[state.psychic].name,
       // the target is only sent to the psychic, or to everyone once revealed
-      target: revealed || role === 'psychic' ? state.target : undefined,
+      target: state.target !== null && (revealed || role === 'psychic') ? state.target : undefined,
       clue: state.clue,
       guess: state.phase === 'reveal' ? state.guess : null,
       lastPoints: state.phase === 'reveal' ? last?.points : undefined,

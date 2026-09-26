@@ -45,20 +45,25 @@ test('tune in: scoring bands', () => {
 test('tune in: only the psychic sees the target; roles swap every round; full game', () => {
   let s = start('tunein')
   assert.equal((s as TuneState).psychic, 0)
-  const target = (s as TuneState).target
+  assert.equal((s as TuneState).target, null, 'the psychic chooses the target themselves')
+  const target = 34
 
   const vP = viewGame(s, A.id, players) as TuneView
   let vG = viewGame(s, B.id, players) as TuneView
   assert.equal(vP.role, 'psychic')
-  assert.equal(vP.target, target)
+  assert.equal(vP.target, undefined, 'nothing is set until the psychic places it')
   assert.equal(vG.role, 'guesser')
   assert.equal(vG.target, undefined, "the guesser must not receive the target")
   assert.ok(!JSON.stringify(vG).includes(`"target":${target}`))
 
-  assert.ok(act(s, B, { type: 'clue', text: 'nope' }).error, 'guesser cannot give the clue')
-  assert.ok(act(s, A, { type: 'clue', text: '   ' }).error)
+  assert.ok(act(s, B, { type: 'clue', text: 'nope', target }).error, 'guesser cannot give the clue')
+  assert.ok(act(s, A, { type: 'clue', text: '   ', target }).error)
+  assert.ok(act(s, A, { type: 'clue', text: 'no target placed' }).error, 'the clue needs a target')
+  assert.ok(act(s, A, { type: 'clue', text: 'off the dial', target: 101 }).error)
+  assert.ok(act(s, A, { type: 'clue', text: 'not a number', target: 'x' }).error)
   assert.ok(act(s, A, { type: 'guess', value: 50 }).error, 'no guessing before the clue')
-  s = ok(s, A, { type: 'clue', text: 'a perfect rainy chai' }).state
+  s = ok(s, A, { type: 'clue', text: 'a perfect rainy chai', target }).state
+  assert.equal((viewGame(s, A.id, players) as TuneView).target, target, 'the psychic still sees the target they placed')
   assert.ok(act(s, A, { type: 'guess', value: 50 }).error, 'the psychic cannot guess their own clue')
   assert.ok(act(s, B, { type: 'guess', value: 500 }).error)
   assert.ok(act(s, B, { type: 'guess', value: 'x' }).error)
@@ -85,7 +90,7 @@ test('tune in: only the psychic sees the target; roles swap every round; full ga
   for (let round = 2; round <= TUNE_ROUNDS; round++) {
     const psychic = (s as TuneState).psychic === 0 ? A : B
     const guesser = psychic === A ? B : A
-    s = ok(s, psychic, { type: 'clue', text: 'clue ' + round }).state
+    s = ok(s, psychic, { type: 'clue', text: 'clue ' + round, target: 10 + round * 10 }).state
     s = ok(s, guesser, { type: 'guess', value: 0 }).state
     last = ok(s, guesser, { type: 'next' })
     s = last.state
