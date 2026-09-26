@@ -14,7 +14,7 @@ export default function OG() {
           <div style={{ fontSize: 64, fontWeight: 800 }}>{SITE.name}</div>
         </div>
         <div style={{ fontSize: 76, fontWeight: 800, marginTop: 40, lineHeight: 1.05, display: 'flex' }}>Date night, anywhere.</div>
-        <div style={{ fontSize: 34, marginTop: 28, color: '#fbcfe8', display: 'flex' }}>18 games for two · a daily streak · no sign-up</div>
+        <div style={{ fontSize: 34, marginTop: 28, color: '#fbcfe8', display: 'flex' }}>20 games for two · a daily streak · no sign-up</div>
       </div>
     ),
     size,

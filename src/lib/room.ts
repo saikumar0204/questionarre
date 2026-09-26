@@ -56,6 +56,14 @@ export async function loadRoom(id: string): Promise<RoomFull | null> {
   return prisma.room.findUnique({ where: { id }, include: roomInclude })
 }
 
+/** Most actions only need the two players; skipping gifts/coupons/bucket/sparks saves several DB round trips per tap. */
+async function loadRoomLite(id: string): Promise<RoomFull | null> {
+  const room = await prisma.room.findUnique({ where: { id }, include: { users: roomInclude.users } })
+  return room ? ({ ...room, gifts: [], coupons: [], bucket: [], sparks: [] } as RoomFull) : null
+}
+
+const NEEDS_CHILDREN = new Set(['spark.answer', 'coupon.redeem', 'bucket.add', 'bucket.toggle'])
+
 const parseJson = <T>(s: string | null | undefined, fallback: T): T => {
   try {
     return s ? (JSON.parse(s) as T) : fallback
@@ -230,7 +238,7 @@ const text = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slic
 
 export async function act(roomId: string, userId: string, body: ActBody): Promise<Result<{ snapshot: Snapshot; toast?: string }>> {
   for (let attempt = 0; attempt < 5; attempt++) {
-    const room = await loadRoom(roomId)
+    const room = await (NEEDS_CHILDREN.has(body.type) ? loadRoom(roomId) : loadRoomLite(roomId))
     if (!room) return fail('Room not found.', 404)
     if (!room.users.some((u) => u.id === userId)) return fail('You are not in this room.', 403)
     const players = toPlayers(room)

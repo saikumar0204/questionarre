@@ -256,8 +256,8 @@ test('a running game cannot be replaced by accident; "play again" can', async ()
   assert.equal((await act(b, { type: 'game.start', game: 'c4', replace: true })).snapshot!.activeGame, 'c4')
 })
 
-test('all 18 games start through the API and every snapshot is free of placeholders', async () => {
-  const ids = ['quiz', 'knowme', 'tod', 'wyr', 'likely', 'nhie', 'sentence', 'lovelang', 'deep', 'ttt', 'c4', 'memory', 'tunein', 'meld', 'rank', 'lie', 'hunt', 'story']
+test('all 20 games start through the API and every snapshot is free of placeholders', async () => {
+  const ids = ['quiz', 'knowme', 'tod', 'wyr', 'likely', 'nhie', 'sentence', 'lovelang', 'deep', 'ttt', 'c4', 'memory', 'tunein', 'meld', 'rank', 'lie', 'hunt', 'story', 'doodle', 'emoji']
   const { a, b, act, state } = await makeCouple()
   for (const id of ids) {
     const started = await act(a, { type: 'game.start', game: id })
@@ -291,7 +291,7 @@ test('pages, metadata and share assets respond', async () => {
 
   // the landing page mentions the headline features
   const html = await (await anon.req('/')).text()
-  assert.match(html, /18 games/)
+  assert.match(html, /20 games/)
   assert.match(html, /Daily Spark|daily streak/i)
 })
 

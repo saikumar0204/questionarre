@@ -23,7 +23,7 @@ Every question uses the partners' real **names** (never a confusing "me / you"),
 ```bash
 npm install
 npm run dev        # http://localhost:3000 — uses a local SQLite file, nothing to configure
-npm test           # 52+ unit tests: engines, content quality, streak maths
+npm test           # 60+ unit tests: engines, content quality, streak maths
 npm run test:e2e   # needs a running server: BASE_URL=http://localhost:3000 npm run test:e2e
 npm run lint
 ```

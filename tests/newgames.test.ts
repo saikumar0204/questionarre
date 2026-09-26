@@ -4,7 +4,8 @@ import { initGame, reduceGame, viewGame, type GameState } from '../src/games/ind
 import type { GameEvent, Player } from '../src/games/types.ts'
 import { MELD_MAX_ROUNDS, TUNE_ROUNDS, normalizeWord, similarity, tuneScore, type MeldState, type MeldView, type RankView, type TuneState, type TuneView } from '../src/games/engines/sync.ts'
 import { HUNT_HEARTS, STORY_LINES, type HuntState, type HuntView, type LieState, type LieView, type StoryView } from '../src/games/engines/play.ts'
-import { SPECTRA, MELD_PAIRS, RANK_PROMPTS, STORY_OPENERS } from '../src/games/content/newgames.ts'
+import { SPECTRA, MELD_PAIRS, RANK_PROMPTS, STORY_OPENERS, DOODLE_WORDS, EMOJI_PHRASES } from '../src/games/content/newgames.ts'
+import { CHARADES_ROUNDS, isCorrectGuess, validateEmoji, validateStrokes, type CharadesState, type CharadesView, type Stroke } from '../src/games/engines/charades.ts'
 
 const A: Player = { id: 'ua', name: 'Priya' }
 const B: Player = { id: 'ub', name: 'Ravi' }
@@ -348,8 +349,8 @@ test('story: can be ended early after six lines', () => {
   assert.equal(r.stats!.storiesWritten, 1)
 })
 
-test('all 18 games start, round-trip through JSON and never leave placeholders', () => {
-  const ids = ['quiz', 'knowme', 'tod', 'wyr', 'likely', 'nhie', 'sentence', 'lovelang', 'deep', 'ttt', 'c4', 'memory', 'tunein', 'meld', 'rank', 'lie', 'hunt', 'story']
+test('all 20 games start, round-trip through JSON and never leave placeholders', () => {
+  const ids = ['quiz', 'knowme', 'tod', 'wyr', 'likely', 'nhie', 'sentence', 'lovelang', 'deep', 'ttt', 'c4', 'memory', 'tunein', 'meld', 'rank', 'lie', 'hunt', 'story', 'doodle', 'emoji']
   for (const id of ids) {
     const s = start(id)
     const revived = JSON.parse(JSON.stringify(s)) as GameState
@@ -359,4 +360,139 @@ test('all 18 games start, round-trip through JSON and never leave placeholders',
       assert.ok(!/\{\w+\}/.test(JSON.stringify(v)), `${id} leaves a placeholder`)
     }
   }
+})
+
+/* ------------------------------------ Doodle Dash & Emoji Charades ------------------------------------ */
+const stroke = (n = 5, c = 0, w = 1): Stroke => ({ c, w, p: Array.from({ length: n }, (_, i) => [i * 40, i * 30] as [number, number]) })
+
+test('charades: word banks are healthy and emoji phrases contain no digits', () => {
+  assert.ok(DOODLE_WORDS.length >= 40 && EMOJI_PHRASES.length >= 30)
+  assert.equal(new Set([...DOODLE_WORDS, ...EMOJI_PHRASES].map((w) => w.id)).size, DOODLE_WORDS.length + EMOJI_PHRASES.length)
+})
+
+test('charades: guess matching forgives case, spacing, plurals and one typo in long words', () => {
+  assert.equal(isCorrectGuess('PIZZA', 'Pizza'), true)
+  assert.equal(isCorrectGuess('  the pizza ', 'Pizza'), true)
+  assert.equal(isCorrectGuess('ice cream', 'Ice cream'), true)
+  assert.equal(isCorrectGuess('icecream', 'Ice cream'), true)
+  assert.equal(isCorrectGuess('elephants', 'Elephant'), true)
+  assert.equal(isCorrectGuess('lighthose', 'Lighthouse'), true, 'one typo in a long word')
+  assert.equal(isCorrectGuess('pizzo', 'Pizza'), false, 'no typo forgiveness in short words')
+  assert.equal(isCorrectGuess('burger', 'Pizza'), false)
+  assert.equal(isCorrectGuess('', 'Pizza'), false)
+})
+
+test('charades: stroke validation rejects junk and oversize payloads', () => {
+  assert.ok(validateStrokes([stroke()]))
+  assert.equal(validateStrokes([]), null)
+  assert.equal(validateStrokes('x'), null)
+  assert.equal(validateStrokes([{ c: 9, w: 1, p: [[1, 1]] }]), null, 'colour out of range')
+  assert.equal(validateStrokes([{ c: 1, w: 5, p: [[1, 1]] }]), null, 'brush out of range')
+  assert.equal(validateStrokes([{ c: 1, w: 1, p: [[1, 2000]] }]), null, 'point off the canvas')
+  assert.equal(validateStrokes([{ c: 1, w: 1, p: [[1, 'a']] }]), null)
+  assert.equal(validateStrokes(Array.from({ length: 81 }, () => stroke(2))), null, 'too many strokes')
+  assert.equal(validateStrokes([stroke(401)]), null, 'stroke too long')
+  assert.equal(validateStrokes(Array.from({ length: 11 }, () => stroke(400))), null, 'too many points overall')
+})
+
+test('charades: emoji clues must be emoji only', () => {
+  assert.equal(validateEmoji('☕💕'), '☕💕')
+  assert.equal(validateEmoji(' 🍕 🌙 '), '🍕🌙', 'spaces are removed')
+  assert.equal(validateEmoji('🇮🇳🏏'), '🇮🇳🏏', 'flags count as one emoji')
+  assert.equal(validateEmoji('pizza 🍕'), null, 'letters would let you type the answer')
+  assert.equal(validateEmoji('🍕1'), null)
+  assert.equal(validateEmoji(''), null)
+  assert.equal(validateEmoji('😀😀😀😀😀😀😀😀😀'), null, 'more than eight')
+  assert.equal(validateEmoji(42), null)
+})
+
+test('charades (draw): the secret word never reaches the guesser; three guesses; scoring; roles alternate', () => {
+  let s = start('doodle')
+  const vG0 = viewGame(s, B.id, players) as CharadesView
+  const vA0 = viewGame(s, A.id, players) as CharadesView
+  assert.equal(vA0.role, 'giver')
+  assert.ok(vA0.word, 'the giver sees the word')
+  assert.equal(vG0.word, undefined, 'the guesser does not')
+  assert.ok(!JSON.stringify(vG0).includes(vA0.word!), 'the word is nowhere in the guesser payload')
+  assert.equal(vG0.pattern.reduce((a, b) => a + b, 0) > 0, true)
+  assert.ok(vG0.category)
+
+  assert.ok(act(s, B, { type: 'clue', clue: [stroke()] }).error, 'guesser cannot draw')
+  assert.ok(act(s, A, { type: 'clue', clue: [] }).error)
+  assert.ok(act(s, B, { type: 'guess', text: 'x' }).error)
+  s = ok(s, A, { type: 'clue', clue: [stroke(), stroke(3, 2, 0)] }).state
+  assert.ok(act(s, A, { type: 'reroll' }).error, 'no word swap after drawing')
+
+  let vG = viewGame(s, B.id, players) as CharadesView
+  assert.equal(vG.phase, 'guess')
+  assert.equal(vG.word, undefined, 'still hidden while guessing')
+  assert.equal((vG.clue as Stroke[]).length, 2)
+  assert.ok(act(s, A, { type: 'guess', text: vA0.word }).error, 'the drawer cannot guess')
+
+  s = ok(s, B, { type: 'guess', text: 'definitely wrong' }).state
+  vG = viewGame(s, B.id, players) as CharadesView
+  assert.equal(vG.guessesLeft, 2)
+  assert.deepEqual(vG.guesses, ['definitely wrong'])
+  const win = ok(s, B, { type: 'guess', text: vA0.word!.toUpperCase() })
+  assert.equal(win.points![A.id], 25, 'second guess = 2 pts → 2*10+5')
+  assert.equal(win.stats!.charadesSolved, 1)
+  s = win.state
+  vG = viewGame(s, B.id, players) as CharadesView
+  assert.equal(vG.phase, 'reveal')
+  assert.equal(vG.solved, true)
+  assert.equal(vG.word, vA0.word, 'the word is revealed after the round')
+  assert.equal(vG.score, 2)
+
+  s = ok(s, B, { type: 'next' }).state
+  const vB = viewGame(s, B.id, players) as CharadesView
+  assert.equal(vB.role, 'giver', 'roles swap')
+  assert.equal(vB.round, 2)
+  assert.ok(vB.word)
+})
+
+test('charades: three wrong guesses end the round with no team point', () => {
+  let s = start('doodle')
+  s = ok(s, A, { type: 'clue', clue: [stroke()] }).state
+  s = ok(s, B, { type: 'guess', text: 'aaa' }).state
+  s = ok(s, B, { type: 'guess', text: 'bbb' }).state
+  const r = ok(s, B, { type: 'guess', text: 'ccc' })
+  const v = viewGame(r.state, B.id, players) as CharadesView
+  assert.equal(v.phase, 'reveal')
+  assert.equal(v.solved, false)
+  assert.equal(v.score, 0)
+  assert.ok(v.word, 'the answer is shown so you can laugh about it')
+  assert.ok(act(r.state, B, { type: 'guess', text: 'ddd' }).error)
+})
+
+test('charades: one word swap per round, giver only', () => {
+  let s = start('emoji')
+  const before = (viewGame(s, A.id, players) as CharadesView).word
+  assert.ok(act(s, B, { type: 'reroll' }).error)
+  s = ok(s, A, { type: 'reroll' }).state
+  const after = (viewGame(s, A.id, players) as CharadesView).word
+  assert.notEqual(before, after)
+  assert.ok(act(s, A, { type: 'reroll' }).error, 'only once')
+  assert.equal((viewGame(s, A.id, players) as CharadesView).rerollAvailable, false)
+})
+
+test('charades (emoji): letters are rejected, a full game reaches the summary', () => {
+  let s = start('emoji')
+  assert.ok(act(s, A, { type: 'clue', clue: 'coffee' }).error)
+  assert.ok(act(s, A, { type: 'clue', clue: '☕💕1' }).error)
+  let last
+  for (let round = 1; round <= CHARADES_ROUNDS; round++) {
+    const giver = (s as CharadesState).giver === 0 ? A : B
+    const guesser = giver === A ? B : A
+    const w = (viewGame(s, giver.id, players) as CharadesView).word!
+    s = ok(s, giver, { type: 'clue', clue: '☕💕' }).state
+    assert.equal((viewGame(s, guesser.id, players) as CharadesView).clue, '☕💕')
+    s = ok(s, guesser, { type: 'guess', text: w }).state
+    last = ok(s, giver, { type: 'next' })
+    s = last.state
+  }
+  const v = viewGame(s, A.id, players) as CharadesView
+  assert.equal(v.finished, true)
+  assert.equal(v.history.length, CHARADES_ROUNDS)
+  assert.equal(v.score, CHARADES_ROUNDS * 3, 'every first-guess solve scores 3')
+  assert.equal(last!.stats!.gamesFinished, 1)
 })

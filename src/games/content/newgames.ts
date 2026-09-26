@@ -101,3 +101,27 @@ export const STORY_OPENERS = [
   'On the very first day of monsoon, {a} and {b} opened a cafe that only served wishes.',
   '{a} and {b} bought a second-hand piano, and it started playing a song neither of them knew.',
 ]
+
+/* ---------- Doodle Dash & Emoji Charades ---------- */
+export type SecretWord = { id: string; word: string; cat: string }
+const words = (prefix: string, rows: [string, string][]): SecretWord[] => rows.map(([cat, word], i) => ({ id: `${prefix}.${i + 1}`, cat, word }))
+
+export const DOODLE_WORDS: SecretWord[] = words('doodle', [
+  ['Food', 'Pizza'], ['Food', 'Ice cream'], ['Food', 'Chai'], ['Food', 'Cake'], ['Food', 'Burger'], ['Food', 'Popcorn'],
+  ['Place', 'Airport'], ['Place', 'Beach'], ['Place', 'Mountain'], ['Place', 'Castle'], ['Place', 'Cinema'], ['Place', 'Lighthouse'],
+  ['Thing', 'Umbrella'], ['Thing', 'Guitar'], ['Thing', 'Camera'], ['Thing', 'Balloon'], ['Thing', 'Candle'], ['Thing', 'Sunglasses'],
+  ['Thing', 'Rocket'], ['Thing', 'Bicycle'], ['Thing', 'Train'], ['Thing', 'Boat'], ['Thing', 'Diary'], ['Thing', 'Telephone'],
+  ['Nature', 'Rainbow'], ['Nature', 'Moon'], ['Nature', 'Sunrise'], ['Nature', 'Flower'], ['Nature', 'Snowman'], ['Nature', 'Volcano'],
+  ['Animal', 'Elephant'], ['Animal', 'Butterfly'], ['Animal', 'Penguin'], ['Animal', 'Giraffe'], ['Animal', 'Owl'], ['Animal', 'Dinosaur'],
+  ['Love', 'Heart'], ['Love', 'Kiss'], ['Love', 'Wedding'], ['Love', 'Selfie'], ['Love', 'Love letter'], ['Love', 'Bouquet'],
+  ['Fun', 'Fireworks'], ['Fun', 'Cricket'], ['Fun', 'Dance'], ['Fun', 'Roller coaster'], ['Fun', 'Camping'], ['Fun', 'Birthday'],
+])
+
+export const EMOJI_PHRASES: SecretWord[] = words('emoji', [
+  ['Date', 'Coffee date'], ['Date', 'Candlelight dinner'], ['Date', 'Movie night'], ['Date', 'Sunset walk'], ['Date', 'First kiss'], ['Date', 'Surprise party'],
+  ['Travel', 'Road trip'], ['Travel', 'Beach vacation'], ['Travel', 'Airport'], ['Travel', 'Honeymoon'], ['Travel', 'Snow day'], ['Travel', 'Camping trip'],
+  ['Food', 'Pizza night'], ['Food', 'Hot chai'], ['Food', 'Late night snacks'], ['Food', 'Street food'], ['Food', 'Birthday cake'], ['Food', 'Ice cream'],
+  ['Life', 'Good morning'], ['Life', 'Long distance'], ['Life', 'Rainy day'], ['Life', 'Shopping spree'], ['Life', 'Karaoke night'], ['Life', 'Gym time'],
+  ['Fun', 'Cricket match'], ['Fun', 'Bollywood dance'], ['Fun', 'Diwali'], ['Fun', 'Holi'], ['Fun', 'Roller coaster'], ['Fun', 'Space trip'],
+  ['Film', 'Titanic'], ['Film', 'Lion King'], ['Film', 'Harry Potter'], ['Film', 'Frozen'], ['Film', 'Spider-Man'], ['Film', 'Finding Nemo'],
+])

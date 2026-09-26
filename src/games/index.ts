@@ -7,15 +7,16 @@ import { cardsEngine, type CardsState, type CardsView } from './engines/cards.ts
 import { c4Engine, memoryEngine, tttEngine, type BoardView, type C4State, type MemoryState, type MemoryView, type TttState } from './engines/board.ts'
 import { meldEngine, rankEngine, tuneEngine, type MeldState, type MeldView, type RankState, type RankView, type TuneState, type TuneView } from './engines/sync.ts'
 import { huntEngine, lieEngine, storyEngine, type HuntState, type HuntView, type LieState, type LieView, type StoryState, type StoryView } from './engines/play.ts'
+import { charadesEngine, type CharadesState, type CharadesView } from './engines/charades.ts'
 import type { Level } from './content/tod.ts'
 import type { DeckId } from './content/deep.ts'
 
 export type GameState =
   | SimulState | GuessState | TodState | CardsState | TttState | C4State | MemoryState
-  | TuneState | MeldState | RankState | LieState | HuntState | StoryState
+  | TuneState | MeldState | RankState | LieState | HuntState | StoryState | CharadesState
 export type GameView =
   | SimulView | GuessView | TodView | CardsView | BoardView<TttState> | BoardView<C4State> | MemoryView
-  | TuneView | MeldView | RankView | LieView | HuntView | StoryView
+  | TuneView | MeldView | RankView | LieView | HuntView | StoryView | CharadesView
 
 export type StartOptions = { category?: string; level?: string; deck?: string }
 
@@ -46,6 +47,8 @@ export function initGame(id: string, players: Player[], options: StartOptions = 
     case 'lie': return lieEngine.init(players, {})
     case 'hunt': return huntEngine.init(players, {})
     case 'story': return storyEngine.init(players, { rand })
+    case 'doodle': return charadesEngine.init(players, { mode: 'draw', rand })
+    case 'emoji': return charadesEngine.init(players, { mode: 'emoji', rand })
   }
   return null
 }
@@ -65,6 +68,7 @@ export function reduceGame(state: GameState, event: GameEvent, actor: string, pl
     case 'lie': return lieEngine.reduce(state, event, actor, players, rand)
     case 'hunt': return huntEngine.reduce(state, event, actor, players, rand)
     case 'story': return storyEngine.reduce(state, event, actor, players, rand)
+    case 'charades': return charadesEngine.reduce(state, event, actor, players, rand)
   }
 }
 
@@ -83,5 +87,6 @@ export function viewGame(state: GameState, viewer: string, players: Player[]): G
     case 'lie': return lieEngine.view(state, viewer, players)
     case 'hunt': return huntEngine.view(state, viewer, players)
     case 'story': return storyEngine.view(state, viewer, players)
+    case 'charades': return charadesEngine.view(state, viewer, players)
   }
 }

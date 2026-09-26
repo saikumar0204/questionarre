@@ -40,7 +40,7 @@ const DECK_CHOICES = [
 
 export type GameId =
   | 'quiz' | 'knowme' | 'tod' | 'wyr' | 'likely' | 'nhie' | 'sentence' | 'lovelang' | 'deep' | 'ttt' | 'c4' | 'memory'
-  | 'tunein' | 'meld' | 'rank' | 'lie' | 'hunt' | 'story'
+  | 'tunein' | 'meld' | 'rank' | 'lie' | 'hunt' | 'story' | 'doodle' | 'emoji'
 export const GROUP_ORDER = ['Sync', 'Get to know', 'Party', 'Deep', 'Board'] as const
 export type GameGroup = (typeof GROUP_ORDER)[number]
 
@@ -151,6 +151,15 @@ export const GAMES: GameDef[] = [
     id: 'hunt', title: 'Heart Hunt', tagline: 'Hide three hearts on a secret grid and find your partner\'s first.',
     emoji: '💘', group: 'Board', gradient: 'from-pink-500 to-red-500', duration: '6 min', badge: 'New',
     hook: 'A hit earns another shot!',
+  },
+  {
+    id: 'doodle', title: 'Doodle Dash', tagline: 'Draw a secret word. Your partner watches it replay and guesses. Terrible art encouraged.',
+    emoji: '🎨', group: 'Party', gradient: 'from-fuchsia-500 to-orange-400', duration: '10 min', badge: 'New', featured: true,
+    hook: 'Watch your drawing come alive',
+  },
+  {
+    id: 'emoji', title: 'Emoji Charades', tagline: 'Explain a phrase using only emojis. Can your partner crack the code?',
+    emoji: '🤯', group: 'Party', gradient: 'from-yellow-400 to-pink-500', duration: '8 min', badge: 'New',
   },
 ]
 

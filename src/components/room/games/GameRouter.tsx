@@ -11,6 +11,7 @@ import { MeldGame } from './MeldGame'
 import { RankGame } from './RankGame'
 import { LieGame } from './LieGame'
 import { StoryGame } from './StoryGame'
+import { CharadesGame } from './CharadesGame'
 
 export function GameRouter({ view }: { view: GameView }) {
   switch (view.engine) {
@@ -27,5 +28,6 @@ export function GameRouter({ view }: { view: GameView }) {
     case 'rank': return <RankGame view={view} />
     case 'lie': return <LieGame view={view} />
     case 'story': return <StoryGame view={view} />
+    case 'charades': return <CharadesGame view={view} />
   }
 }
