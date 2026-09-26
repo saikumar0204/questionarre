@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { GuessView } from '@/games/engines/guess'
 import { useRoom } from '../store'
@@ -9,6 +10,7 @@ import { cn, HeartBurst, NameTag, useCelebrate } from '@/components/ui'
 export function KnowMeGame({ view }: { view: GuessView }) {
   const { send, act, busy } = useRoom()
   const { me, partner, ordered } = usePlayers()
+  const [picked, setPicked] = useState<{ key: string; i: number } | null>(null)
   const celebrate = useCelebrate(view.stage === 'summary' ? 'summary' : view.stage === 'reveal' && view.reveal?.rows.some((r) => r.correct) ? `r${view.index}` : null)
   const progress = view.stage === 'summary' ? undefined : { index: view.index, total: view.total }
 
@@ -87,7 +89,7 @@ export function KnowMeGame({ view }: { view: GuessView }) {
           {answering ? (
             <div className="mt-5 space-y-2.5">
               {p.options.map((o, i) => (
-                <button key={i} className="option" disabled={busy} onClick={() => send({ type: isSelf ? 'self' : 'guess', promptId: p.id, value: i })}>
+                <button key={i} className={cn('option', picked?.key === `${p.id}-${view.stage}` && picked.i === i && 'option-selected')} disabled={busy} onClick={async () => { const key = `${p.id}-${view.stage}`; setPicked({ key, i }); if (!(await send({ type: isSelf ? 'self' : 'guess', promptId: p.id, value: i }))) setPicked(null) }}>
                   <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-white/25 text-[11px] font-bold text-white/60">{String.fromCharCode(65 + i)}</span>
                   <span>{o}</span>
                 </button>

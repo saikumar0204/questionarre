@@ -28,9 +28,16 @@ export function SimulGame({ view }: { view: SimulView }) {
   const { me, partner } = usePlayers()
   const def = gameById(view.game)!
   const [text, setText] = useState('')
+  const [picked, setPicked] = useState<{ id: string; i: number } | null>(null)
   const celebrate = useCelebrate(view.stage === 'reveal' && view.match ? `${view.index}-match` : view.stage === 'summary' && (view.summary?.percent ?? 0) >= 75 ? 'summary' : null)
 
-  const answer = (value: number | string) => send({ type: 'answer', promptId: view.prompt!.id, value })
+  const answer = async (value: number | string) => {
+    const id = view.prompt!.id
+    if (typeof value === 'number') setPicked({ id, i: value }) // instant feedback while the server confirms
+    const ok = await send({ type: 'answer', promptId: id, value })
+    if (!ok) setPicked(null)
+    return ok
+  }
   const playAgain = () => act({ type: 'game.start', replace: true, game: view.game, options: { category: view.category } })
   const progress = view.stage === 'summary' ? undefined : { index: view.game === 'lovelang' ? view.index : view.index, total: view.total }
 
@@ -95,7 +102,7 @@ export function SimulGame({ view }: { view: SimulView }) {
           {view.stage === 'answering' && !p.freeText && (
             <div className="mt-5 space-y-2.5">
               {p.options?.map((o, i) => (
-                <button key={i} className="option" disabled={busy} onClick={() => answer(i)}>
+                <button key={i} className={cn('option', picked?.id === p.id && picked.i === i && 'option-selected')} disabled={busy} onClick={() => answer(i)}>
                   <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-white/25 text-[11px] font-bold text-white/60">{String.fromCharCode(65 + i)}</span>
                   <span>{o}</span>
                 </button>
