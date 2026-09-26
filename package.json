@@ -1,12 +1,16 @@
 {
   "name": "love-website",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && prisma db push --accept-data-loss && ts-node prisma/seed.ts && next build",
-    "start": "next start",
+    "dev": "node scripts/run.mjs dev",
+    "build": "node scripts/run.mjs build",
+    "start": "node scripts/run.mjs start",
     "lint": "eslint",
+    "test": "node --test tests/engines.test.ts tests/content.test.ts tests/spark.test.ts tests/newgames.test.ts",
+    "test:e2e": "node --test tests/e2e.test.ts",
+    "db:prepare": "node scripts/prepare-db.mjs",
     "postinstall": "prisma skills sync || exit 0"
   },
   "dependencies": {
@@ -26,7 +30,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
-    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
